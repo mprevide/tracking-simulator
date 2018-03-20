@@ -6,8 +6,7 @@ The simulator sends data to dojot through MQTT with the following JSON payload:
 
 ```json
 {"sinr": "<value>",
- "lat": "<value>",
- "lng": "<value>"}
+ "gps": "<latitude-value>,<longitude-value>"}
 ```
 
 # Usage

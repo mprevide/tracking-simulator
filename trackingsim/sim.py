@@ -32,11 +32,9 @@ class Simulator:
         while True:
             data = dict()
 
-            # latitude
-            data['lat'] = str(self.__current_position.latitude)
-
-            # longitude
-            data['lng'] = str(self.__current_position.longitude)
+            # gps
+            data['gps'] = "{0}, {1}".format(str(self.__current_position.latitude),
+                                            str(self.__current_position.longitude))
 
             # sinr
             data['sinr'] = self.__get_next_sinr()
