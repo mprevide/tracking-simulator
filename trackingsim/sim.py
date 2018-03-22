@@ -17,14 +17,14 @@ class Simulator:
     MAX_BEARING = 360  # 360 degrees
     MAX_DISPLACEMENT_FROM_ORIGIN = 50  # 50 Km
 
-    def __init__(self, host, port, service, device, latitude, longitude):
+    def __init__(self, host, port, tenant, device, latitude, longitude):
         self.__logger = logging.getLogger('trackingsim.sim')
         self.__origin = Point(latitude, longitude)
         self.__current_position = Point(latitude, longitude)
         self.__mqttc = mqtt.Client(str(threading.current_thread().ident))
         self.__mqttc.connect(host=host, port=port)
         self.__mqttc.loop_start()
-        self.__topic = "/{0}/{1}/attrs".format(service, device)
+        self.__topic = "/{0}/{1}/attrs".format(tenant, device)
         self.__sleep = np.random.uniform(self.__class__.MIN_SLEEP_TIME, self.__class__.MAX_SLEEP_TIME)
         self.__logger.info("Starting simulation for device {0} with sleep time {1}".format(device, self.__sleep))
 

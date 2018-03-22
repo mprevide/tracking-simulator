@@ -6,7 +6,7 @@ The simulator sends data to dojot through MQTT with the following JSON payload:
 
 ```json
 {"sinr": "<value>",
- "gps": "<latitude-value>,<longitude-value>"}
+ "gps": "<latitude-value>, <longitude-value>"}
 ```
 
 # Usage
@@ -19,8 +19,14 @@ Options:
   -h, --help            show this help message and exit
   -H HOST, --host=HOST  Host to connect. Defaults to localhost.
   -P PORT, --port=PORT  Port to connect to. Defaults to 1883.
-  -s SERVICE, --service=SERVICE
-                        Service identifier in dojot. Defaults to admin.
+  -t TENANT, --tenat=TENANT
+  -u USER, --user=USER  User identifier in dojot. Defaults to admin.
+  -p PASSWORD, --password=PASSWORD
+                        User password in dojot. Defaults to admin.
+  -c, --clear           Remove all templates and devices whose names start
+                        with trackingsim prefix. Default disabled.
+  -n NUMBER_OF_DEVICES, --number_of_devices=NUMBER_OF_DEVICES
+                        Number of devices to be created. Defaults to 0.
   -d DEVICES, --device=DEVICES
                         Device identifier in dojot. Multiple devices can be
                         simulated simultaneously repeating this option.
