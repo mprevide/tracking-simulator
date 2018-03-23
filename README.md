@@ -36,4 +36,7 @@ Options:
   -y LONGITUDE, --longitude=LONGITUDE
                         Starting longitude for the simulation. Defaults to
                         -47.045121.
+    -m MOVEMENT, --movement=MOVEMENT
+                        Type of movement (straight-line or random) for the
+                        simulation. Defaults to straight-line.
 ```

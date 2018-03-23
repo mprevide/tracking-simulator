@@ -14,8 +14,8 @@ logger.addHandler(channel)
 
 
 # thread
-def worker(host, port, service, device, latitude, longitude):
-    s = Simulator(host, port, service, device, latitude, longitude)
+def worker(host, port, service, device, latitude, longitude, movement):
+    s = Simulator(host, port, service, device, latitude, longitude, movement)
     s.run()
 
 
@@ -65,8 +65,18 @@ if __name__ == '__main__':
     parser.add_option("-y", "--longitude", dest="longitude", default="-47.045121",
                       help="Starting longitude for the simulation. Defaults to -47.045121.")
 
+    # Simulation - Type of movement (random or straight-line)
+    parser.add_option("-m", "--movement", dest="movement", default="straight-line",
+                      help="Type of movement (straight-line or random) for the simulation. "
+                           "Defaults to straight-line.")
+
     (options, args) = parser.parse_args()
     logger.info("Options: {}".format(options))
+
+    # validate parameters
+    if options.movement != 'straight-line' and options.movement != 'random':
+        logger.error("The type of movement {} is invalid. It must be straight-line or random.",
+                     options.movement)
 
     # remove templates and devices from earlier runs
     if options.clear:
@@ -85,8 +95,9 @@ if __name__ == '__main__':
     if devices:
         for device_id in devices:
             logger.info("Starting thread for device {}".format(device_id))
-            t = threading.Thread(target=worker, args=(options.host, options.port, options.tenant, device_id,
-                                                  options.latitude, options.longitude))
+            t = threading.Thread(target=worker, args=(options.host, options.port, options.tenant,
+                                                      device_id, options.latitude, options.longitude,
+                                                      options.movement))
             t.start()
     else:
-        logger.error("There is no device to simulate!")
+        logger.info("Finishing! There is not device to simulate.")
