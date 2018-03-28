@@ -2,7 +2,7 @@ import logging
 import threading
 from optparse import OptionParser
 from trackingsim.sim import Simulator
-from trackingsim.devices import (create_devices, remove_devices, remove_templates)
+from trackingsim.devices import (create_devices, remove_devices)
 
 # set logger
 logger = logging.getLogger('trackingsim')
@@ -43,6 +43,10 @@ if __name__ == '__main__':
     parser.add_option("-p", "--password", dest="password", default="admin",
                       help="User password in dojot. Defaults to admin.")
 
+    # dojot - prefix
+    parser.add_option("-l", "--prefix", dest="prefix", default="trackingsim",
+                      help="Label prefix for templates and devices. Defaults to trackingsim.")
+
     # dojot - Remove templates and devices whose names start with trackingsim prefix
     parser.add_option("-c", "--clear", action="store_true", dest="clear",
                       help="Remove all templates and devices whose names start with "
@@ -50,7 +54,7 @@ if __name__ == '__main__':
 
     # dojot - Number of devices to be created
     parser.add_option("-n", "--number_of_devices", dest="number_of_devices", type="int", default=0,
-                      help="Number of devices to be created. Defaults to 0.")
+                      help="Number of devices to be created [1..128]. Defaults to 0.")
 
     # dojot - Device ID list
     parser.add_option("-d", "--device", dest="devices", default=[], action="append",
@@ -77,18 +81,23 @@ if __name__ == '__main__':
     if options.movement != 'straight-line' and options.movement != 'random':
         logger.error("The type of movement {} is invalid. It must be straight-line or random.",
                      options.movement)
+        exit(-1)
 
-    # remove templates and devices from earlier runs
+    if options.number_of_devices < 0 or options.number_of_devices > 128:
+        logger.error("The number of devices must be in [0..128].")
+        exit(-2)
+
+    # remove devices and templates from earlier runs
     if options.clear:
-        remove_devices(options.host, options.user, options.password)
-        remove_templates(options.host, options.user, options.password)
+        remove_devices(options.host, options.user, options.password, options.prefix)
 
-    # create devices
+    # create templates and devices
     devices = []
     if options.number_of_devices > 0:
         devices = create_devices(options.host, options.user,
                                  options.password,
-                                 options.number_of_devices)
+                                 options.number_of_devices,
+                                 options.prefix)
 
     # run one thread for each device
     devices = devices + options.devices

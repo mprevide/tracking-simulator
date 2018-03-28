@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger('trackingsim.devices')
 
 
-def create_devices(host, user, password, number_of_devices):
+def create_devices(host, user, password, number_of_devices, prefix='trackingsim'):
     devices = []
 
     # Get JWT token
@@ -17,7 +17,7 @@ def create_devices(host, user, password, number_of_devices):
 
     # Create Template
     url = 'http://{}:8000/template'.format(host)
-    data = {"label": "trackingsim-vehicle",
+    data = {"label": "{}".format(prefix),
             "attrs" : [{"label" : "gps",
                         "type" : "dynamic",
                         "value_type" : "geo:point"},
@@ -31,7 +31,7 @@ def create_devices(host, user, password, number_of_devices):
     url = 'http://{}:8000/device'.format(host)
     for n in range(1,number_of_devices+1):
         data = {"templates" : ["{}".format(template_id)],
-                "label" : "trackingsim-vehicle{}".format(n)}
+                "label" : "{0}-{1}".format(prefix,n)}
         result = requests.post(url=url, headers=auth_header, json=data)
         device_id = result.json()['devices'][0]['id']
         devices.append(device_id)
@@ -41,7 +41,7 @@ def create_devices(host, user, password, number_of_devices):
     return devices
 
 
-def remove_devices(host, user, password):
+def remove_devices(host, user, password, prefix='trackingsim'):
     # Get JWT token
     url = 'http://{}:8000/auth'.format(host)
     data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
@@ -51,13 +51,13 @@ def remove_devices(host, user, password):
 
     # Get devices
     # TODO handle pagination
-    url = 'http://{}:8000/device?page_size=1000'.format(host)
+    url = 'http://{}:8000/device?page_size=128'.format(host)
     result = requests.get(url=url, headers=auth_header)
     all_devices = list(result.json()['devices'])
 
     devices_to_be_removed = []
     for dev in all_devices:
-        if dev['label'].startswith('trackingsim'):
+        if dev['label'].startswith(prefix):
             devices_to_be_removed.append(dev['id'])
 
     # Remove devices
@@ -72,15 +72,6 @@ def remove_devices(host, user, password):
 
     logger.info("Removed devices: {}".format(removed_devices))
 
-
-def remove_templates(host, user, password):
-    # Get JWT token
-    url = 'http://{}:8000/auth'.format(host)
-    data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
-    result = requests.post(url=url, json=data)
-    token = result.json()['jwt']
-    auth_header = {"Authorization": "Bearer {}".format(token)}
-
     # Get templates
     # TODO handle pagination
     url = 'http://{}:8000/template?page_size=1000'.format(host)
@@ -89,7 +80,7 @@ def remove_templates(host, user, password):
 
     templates_to_be_removed = []
     for tpl in all_templates:
-        if tpl['label'].startswith('trackingsim'):
+        if tpl['label'].startswith(prefix):
             templates_to_be_removed.append(tpl['id'])
 
     # Remove templates

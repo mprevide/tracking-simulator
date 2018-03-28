@@ -10,6 +10,11 @@ The simulator sends data to dojot through MQTT with the following JSON payload:
 ```
 
 # Usage
+To install the package requirements, run
+
+```
+$ pip3 install -r requirements.txt
+```
 
 ```
 $ python3 -m trackingsim.main -h
@@ -19,10 +24,14 @@ Options:
   -h, --help            show this help message and exit
   -H HOST, --host=HOST  Host to connect. Defaults to localhost.
   -P PORT, --port=PORT  Port to connect to. Defaults to 1883.
-  -t TENANT, --tenat=TENANT
+  -t TENANT, --tenant=TENANT
+                        Tenant identifier in dojot. Defaults to admin
   -u USER, --user=USER  User identifier in dojot. Defaults to admin.
   -p PASSWORD, --password=PASSWORD
                         User password in dojot. Defaults to admin.
+  -l PREFIX, --prefix=PREFIX
+                        Label prefix for templates and devices. Defaults to
+                        trackingsim.
   -c, --clear           Remove all templates and devices whose names start
                         with trackingsim prefix. Default disabled.
   -n NUMBER_OF_DEVICES, --number_of_devices=NUMBER_OF_DEVICES
