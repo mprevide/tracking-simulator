@@ -9,13 +9,15 @@ from geopy import distance
 
 
 class Simulator:
-    MIN_SLEEP_TIME = 1  # 1 second
-    MAX_SLEEP_TIME = 5  # 5 seconds
+    MIN_SLEEP_TIME = 2    # 2 second
+    MAX_SLEEP_TIME = 10   # 10 seconds
     MIN_DISPLACEMENT = 0   # 0 Km
     MAX_DISPLACEMENT = 0.5 # 0.5 Km
-    MIN_BEARING = 0  # 0 degree
+    MIN_BEARING = 0    # 0 degree
     MAX_BEARING = 360  # 360 degrees
     MAX_DISPLACEMENT_FROM_ORIGIN = 50  # 50 Km
+    MEAN_TEMPERATURE = 90
+    MEAN_RPM = 4000
 
     def __init__(self, host, port, tenant, device, latitude, longitude, movement):
         self.__logger = logging.getLogger('trackingsim.sim')
@@ -49,6 +51,12 @@ class Simulator:
 
             # sinr
             data['sinr'] = self.__get_next_sinr()
+
+            # temperature
+            data['temperature'] = np.random.normal(self.MEAN_TEMPERATURE)
+
+            # RPM
+            data['rpm'] = np.random.normal(self.MEAN_RPM)
 
             # publish
             self.__logger.info("Publishing: {0}".format(json.dumps(data)))

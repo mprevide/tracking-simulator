@@ -1,5 +1,7 @@
 import requests
+import json
 import logging
+import uuid
 # TODO: handle errors
 
 logger = logging.getLogger('trackingsim.devices')
@@ -11,30 +13,86 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
     # Get JWT token
     url = 'http://{}:8000/auth'.format(host)
     data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
-    result = requests.post(url=url, json=data)
-    token = result.json()['jwt']
-    auth_header = {"Authorization" : "Bearer {}".format(token)}
+    response = requests.post(url=url, json=data)
+    token = response.json()['jwt']
+    if response.status_code != 200:
+        raise Exception("HTTP POST failed {}.".
+                        format(response.status_code))
+    auth_header = {"Authorization": "Bearer {}".format(token)}
 
     # Create Template
     url = 'http://{}:8000/template'.format(host)
     data = {"label": "{}".format(prefix),
-            "attrs" : [{"label" : "gps",
+            "attrs" : [{"label": "protocol",
+                        "type": "meta",
+                        "value_type": "string",
+                        "static_value": "mqtt"},
+                       #{
+                       #    "label": "device_timeout",
+                       #    "type": "meta",
+                       #    "value_type": "integer",
+                       #    "static_value": 600000
+                       #},
+                       {"label" : "gps",
                         "type" : "dynamic",
                         "value_type" : "geo:point"},
                        {"label" : "sinr",
                         "type" : "dynamic",
-                        "value_type" : "float"}]}
-    result = requests.post(url=url, headers=auth_header, json=data)
-    template_id = result.json()['template']['id']
+                        "value_type" : "float"},
+                       {"label": "temperature",
+                        "type": "dynamic",
+                        "value_type": "float"},
+                       {"label": "rpm",
+                        "type": "dynamic",
+                        "value_type": "float"},
+                       {"label": "serial",
+                        "type": "static",
+                        "value_type": "string",
+                        "static_value": "undefined"}]}
+    response = requests.post(url=url, headers=auth_header, json=data)
+    if response.status_code != 200:
+        raise Exception("HTTP POST failed {}.".
+                        format(response.status_code))
+    template_id = response.json()['template']['id']
 
     # Create devices
     url = 'http://{}:8000/device'.format(host)
     for n in range(1,number_of_devices+1):
         data = {"templates" : ["{}".format(template_id)],
                 "label" : "{0}-{1}".format(prefix,n)}
-        result = requests.post(url=url, headers=auth_header, json=data)
-        device_id = result.json()['devices'][0]['id']
+        response = requests.post(url=url, headers=auth_header, json=data)
+        if response.status_code != 200:
+            raise Exception("HTTP POST failed {}.".
+                            format(response.status_code))
+        device_id = response.json()['devices'][0]['id']
+        if response.status_code != 200:
+            raise Exception("HTTP POST failed {}.".
+                            format(response.status_code))
         devices.append(device_id)
+
+        # Set serial number
+        url_update = 'http://{}:8000/device/{}'.format(host, device_id)
+        # Get
+        response = requests.get(url=url_update, headers=auth_header)
+        if response.status_code != 200:
+            raise Exception("HTTP POST failed {}.".
+                            format(response.status_code))
+        data = response.json()
+        attrs_static = []
+        for attribute in data['attrs']["{}".format(template_id)]:
+            if attribute['type'] == 'static':
+                if attribute['label'] == 'serial':
+                    attribute['static_value'] = uuid.uuid4().hex
+                    # workaround gui. TODO: remove when fixed
+                    attribute['static_value'] = attribute['static_value'][:12]
+                attrs_static.append(attribute)
+        data['attrs'] = attrs_static
+
+        # Put
+        response = requests.put(url=url_update, headers=auth_header, json=data)
+        if response.status_code != 200:
+            raise Exception("HTTP POST failed {}.".
+                            format(response.status_code))
 
     logger.info("Created devices: {}".format(devices))
 
@@ -45,15 +103,21 @@ def remove_devices(host, user, password, prefix='trackingsim'):
     # Get JWT token
     url = 'http://{}:8000/auth'.format(host)
     data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
-    result = requests.post(url=url, json=data)
-    token = result.json()['jwt']
+    response = requests.post(url=url, json=data)
+    if response.status_code != 200:
+        raise Exception("HTTP POST failed {}.".
+                        format(response.status_code))
+    token = response.json()['jwt']
     auth_header = {"Authorization": "Bearer {}".format(token)}
 
     # Get devices
     # TODO handle pagination
     url = 'http://{}:8000/device?page_size=128'.format(host)
-    result = requests.get(url=url, headers=auth_header)
-    all_devices = list(result.json()['devices'])
+    response = requests.get(url=url, headers=auth_header)
+    if response.status_code != 200:
+        raise Exception("HTTP GET failed {}.".
+                        format(response.status_code))
+    all_devices = list(response.json()['devices'])
 
     devices_to_be_removed = []
     for dev in all_devices:
@@ -64,8 +128,8 @@ def remove_devices(host, user, password, prefix='trackingsim'):
     removed_devices = []
     for dev in devices_to_be_removed:
         url = 'http://{0}:8000/device/{1}'.format(host, dev)
-        result = requests.delete(url=url, headers=auth_header)
-        if result.status_code == requests.codes.ok:
+        response = requests.delete(url=url, headers=auth_header)
+        if response.status_code == requests.codes.ok:
             removed_devices.append(dev)
         else:
             logger.error("Failed to remove device {}".format(dev))
@@ -75,8 +139,11 @@ def remove_devices(host, user, password, prefix='trackingsim'):
     # Get templates
     # TODO handle pagination
     url = 'http://{}:8000/template?page_size=1000'.format(host)
-    result = requests.get(url=url, headers=auth_header)
-    all_templates = list(result.json()['templates'])
+    response = requests.get(url=url, headers=auth_header)
+    if response.status_code != 200:
+        raise Exception("HTTP GET failed {}.".
+                        format(response.status_code))
+    all_templates = list(response.json()['templates'])
 
     templates_to_be_removed = []
     for tpl in all_templates:
@@ -87,8 +154,8 @@ def remove_devices(host, user, password, prefix='trackingsim'):
     removed_templates = []
     for tpl in templates_to_be_removed:
         url = 'http://{0}:8000/template/{1}'.format(host, tpl)
-        result = requests.delete(url=url, headers=auth_header)
-        if result.status_code == requests.codes.ok:
+        response = requests.delete(url=url, headers=auth_header)
+        if response.status_code == requests.codes.ok:
             removed_templates.append(tpl)
         else:
             logger.error("Failed to remove template {}".format(tpl))

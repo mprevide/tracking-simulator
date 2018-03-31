@@ -9,13 +9,14 @@ The simulator sends data to dojot through MQTT with the following JSON payload:
  "gps": "<latitude-value>, <longitude-value>"}
 ```
 
-# Usage
-To install the package requirements, run
+# Installation
+To install the package requirements run:
 
 ```
 $ pip3 install -r requirements.txt
 ```
 
+# Usage
 ```
 $ python3 -m trackingsim.main -h
 Usage: main.py [options]
