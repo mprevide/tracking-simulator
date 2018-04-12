@@ -14,8 +14,10 @@ logger.addHandler(channel)
 
 
 # thread
-def worker(host, port, service, device, latitude, longitude, movement):
-    s = Simulator(host, port, service, device, latitude, longitude, movement)
+def worker(host, port, service, device, latitude,
+           longitude, movement, min_sleep, max_sleep):
+    s = Simulator(host, port, service, device,
+                  latitude, longitude, movement, min_sleep, max_sleep)
     s.run()
 
 
@@ -74,6 +76,14 @@ if __name__ == '__main__':
                       help="Type of movement (straight-line or random) for the simulation. "
                            "Defaults to straight-line.")
 
+    # Simulation - Minimum waiting time for sending data
+    parser.add_option("-a", "--min_waiting_time", dest="min_waiting_time", type="int", default=2,
+                      help="Minimum waiting time for sending data [1..600] seconds. Defaults to 2.")
+
+    # Simulation - Maximum waiting time for sending data
+    parser.add_option("-b", "--max_waiting_time", dest="max_waiting_time", type="int", default=10,
+                      help="Maximum waiting time for sending data [1..600] seconds. Defaults to 10.")
+
     (options, args) = parser.parse_args()
     logger.info("Options: {}".format(options))
 
@@ -86,6 +96,18 @@ if __name__ == '__main__':
     if options.number_of_devices < 0 or options.number_of_devices > 128:
         logger.error("The number of devices must be in [0..128].")
         exit(-2)
+
+    if options.min_waiting_time < 1 or options.min_waiting_time > 600:
+        logger.error("The minimum waiting time must be in [1..600].")
+        exit(-3)
+
+    if options.max_waiting_time < 1 or options.max_waiting_time > 600:
+        logger.error("The maximum waiting time must be in [1..600].")
+        exit(-4)
+
+    if options.min_waiting_time > options.max_waiting_time:
+        logger.error("The minimum waiting time must be less than maximum waiting time.")
+        exit(-5)
 
     # remove devices and templates from earlier runs
     if options.clear:
@@ -104,9 +126,15 @@ if __name__ == '__main__':
     if devices:
         for device_id in devices:
             logger.info("Starting thread for device {}".format(device_id))
-            t = threading.Thread(target=worker, args=(options.host, options.port, options.tenant,
-                                                      device_id, options.latitude, options.longitude,
-                                                      options.movement))
+            t = threading.Thread(target=worker, args=(options.host,
+                                                      options.port,
+                                                      options.tenant,
+                                                      device_id,
+                                                      options.latitude,
+                                                      options.longitude,
+                                                      options.movement,
+                                                      options.min_waiting_time,
+                                                      options.max_waiting_time))
             t.start()
     else:
         logger.info("Finishing! There is not device to simulate.")

@@ -1,13 +1,6 @@
 # tracking-simulator
-It simulates a device randomly moving from a starting point with sinr decreasing as
+It simulates a device moving from a starting point with sinr decreasing as
 it distances itself from the origin.
-
-The simulator sends data to dojot through MQTT with the following JSON payload:
-
-```json
-{"sinr": "<value>",
- "gps": "<latitude-value>, <longitude-value>"}
-```
 
 # Installation
 To install the package requirements run:
@@ -46,7 +39,13 @@ Options:
   -y LONGITUDE, --longitude=LONGITUDE
                         Starting longitude for the simulation. Defaults to
                         -47.045121.
-    -m MOVEMENT, --movement=MOVEMENT
+  -m MOVEMENT, --movement=MOVEMENT
                         Type of movement (straight-line or random) for the
                         simulation. Defaults to straight-line.
+  -a MIN_WAITING_TIME, --min_waiting_time=MIN_WAITING_TIME
+                        Minimum waiting time for sending data [1..600]
+                        seconds. Defaults to 2.
+  -b MAX_WAITING_TIME, --max_waiting_time=MAX_WAITING_TIME
+                        Maximum waiting time for sending data [1..600]
+                        seconds. Defaults to 10.
 ```

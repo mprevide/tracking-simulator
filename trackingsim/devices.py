@@ -1,10 +1,90 @@
 import requests
-import json
 import logging
-import uuid
-# TODO: handle errors
 
+# logger
 logger = logging.getLogger('trackingsim.devices')
+
+# list of attributes
+device_attributes_model = [
+    {"label": "protocol",               "type": "meta",    "value_type": "string", "static_value": "mqtt"},
+    {"label": "imsi",                   "type": "dynamic", "value_type": "string"},
+    {"label": "vehicleID",              "type": "dynamic", "value_type": "string"},
+    {"label": "ts",                     "type": "dynamic", "value_type": "string"},
+    {"label": "ue_status",              "type": "dynamic", "value_type": "string"},
+    {"label": "grower",                 "type": "dynamic", "value_type": "string"},
+    {"label": "farm",                   "type": "dynamic", "value_type": "string"},
+    {"label": "field",                  "type": "dynamic", "value_type": "string"},
+    {"label": "task",                   "type": "dynamic", "value_type": "string"},
+    {"label": "taskSUID",               "type": "dynamic", "value_type": "string"},
+    {"label": "tags",                   "type": "dynamic", "value_type": "string"},
+    {"label": "displayAlarmCode",       "type": "dynamic", "value_type": "string"},
+    {"label": "tiv_id",                 "type": "dynamic", "value_type": "string"},
+    {"label": "rfid_tag_id",            "type": "dynamic", "value_type": "string"},
+    {"label": "operator",               "type": "dynamic", "value_type": "string"},
+    {"label": "rssi",                   "type": "dynamic", "value_type": "integer"},
+    {"label": "cell_id",                "type": "dynamic", "value_type": "integer"},
+    {"label": "sinr",                   "type": "dynamic", "value_type": "integer"},
+    {"label": "sattelites",             "type": "dynamic", "value_type": "integer"},
+    {"label": "quality",                "type": "dynamic", "value_type": "integer"},
+    {"label": "fix",                    "type": "dynamic", "value_type": "integer"},
+    {"label": "test_time_elapsed",      "type": "dynamic", "value_type": "integer"},
+    {"label": "rpm",                    "type": "dynamic", "value_type": "integer"},
+    {"label": "cutterHeight",           "type": "dynamic", "value_type": "integer"},
+    {"label": "cutterStatus",           "type": "dynamic", "value_type": "integer"},
+    {"label": "elevatorUpTime",         "type": "dynamic", "value_type": "integer"},
+    {"label": "elevatorStatus",         "type": "dynamic", "value_type": "integer"},
+    {"label": "extractorRpm",           "type": "dynamic", "value_type": "integer"},
+    {"label": "workCondition",          "type": "dynamic", "value_type": "integer"},
+    {"label": "fieldMode",              "type": "dynamic", "value_type": "integer"},
+    {"label": "engineUpTime",           "type": "dynamic", "value_type": "integer"},
+    {"label": "coolantTemp",            "type": "dynamic", "value_type": "integer"},
+    {"label": "engineLoad",             "type": "dynamic", "value_type": "integer"},
+    {"label": "manifoldTemperature",    "type": "dynamic", "value_type": "integer"},
+    {"label": "oilTemperature",         "type": "dynamic", "value_type": "integer"},
+    {"label": "hidrOilTemperature",     "type": "dynamic", "value_type": "integer"},
+    {"label": "farmingAreaRemain",      "type": "dynamic", "value_type": "integer"},
+    {"label": "area",                   "type": "dynamic", "value_type": "integer"},
+    {"label": "workStatus",             "type": "dynamic", "value_type": "integer"},
+    {"label": "weightWet",              "type": "dynamic", "value_type": "integer"},
+    {"label": "idleReason",             "type": "dynamic", "value_type": "integer"},
+    {"label": "idleDuration",           "type": "dynamic", "value_type": "integer"},
+    {"label": "crop",                   "type": "dynamic", "value_type": "integer"},
+    {"label": "fuelTheft",              "type": "dynamic", "value_type": "integer"},
+    {"label": "displayAlarmStatus",     "type": "dynamic", "value_type": "integer"},
+    {"label": "rfid_antenna",           "type": "dynamic", "value_type": "integer"},
+    {"label": "rfid_rssi",              "type": "dynamic", "value_type": "integer"},
+    {"label": "rfid_read_count",        "type": "dynamic", "value_type": "integer"},
+    {"label": "rfid_read_elapsed_time", "type": "dynamic", "value_type": "integer"},
+    {"label": "temperature",            "type": "dynamic", "value_type": "float"},
+    {"label": "track",                  "type": "dynamic", "value_type": "float"},
+    {"label": "speed",                  "type": "dynamic", "value_type": "float"},
+    {"label": "lat",                    "type": "dynamic", "value_type": "float"},
+    {"label": "lng",                    "type": "dynamic", "value_type": "float"},
+    {"label": "alt",                    "type": "dynamic", "value_type": "float"},
+    {"label": "number_of_tests",        "type": "dynamic", "value_type": "float"},
+    {"label": "number_of_ok",           "type": "dynamic", "value_type": "float"},
+    {"label": "number_of_failed",       "type": "dynamic", "value_type": "float"},
+    {"label": "average_latency_msec",   "type": "dynamic", "value_type": "float"},
+    {"label": "maximum_latency_msec",   "type": "dynamic", "value_type": "float"},
+    {"label": "minimum_latency_msec",   "type": "dynamic", "value_type": "float"},
+    {"label": "latency_std_deviation",  "type": "dynamic", "value_type": "float"},
+    {"label": "latency_variance",       "type": "dynamic", "value_type": "float"},
+    {"label": "fuelRate",               "type": "dynamic", "value_type": "float"},
+    {"label": "boostPressure",          "type": "dynamic", "value_type": "float"},
+    {"label": "oilPressure",            "type": "dynamic", "value_type": "float"},
+    {"label": "fuelLevel",              "type": "dynamic", "value_type": "float"},
+    {"label": "cutterPressure",         "type": "dynamic", "value_type": "float"},
+    {"label": "groundSpeed",            "type": "dynamic", "value_type": "float"},
+    {"label": "fuelRateAverage",        "type": "dynamic", "value_type": "float"},
+    {"label": "fuelAreaAverage",        "type": "dynamic", "value_type": "float"},
+    {"label": "fuelUsedField",          "type": "dynamic", "value_type": "float"},
+    {"label": "fuelUsedRoad",           "type": "dynamic", "value_type": "float"},
+    {"label": "yieldWet",               "type": "dynamic", "value_type": "float"},
+    {"label": "yieldWetAverage",        "type": "dynamic", "value_type": "float"},
+    {"label": "flowWet",                "type": "dynamic", "value_type": "float"},
+    {"label": "flowWetAverage",         "type": "dynamic", "value_type": "float"},
+    {"label": "coordinates",            "type": "dynamic", "value_type": "geo:point"},
+]
 
 
 def create_devices(host, user, password, number_of_devices, prefix='trackingsim'):
@@ -23,32 +103,7 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
     # Create Template
     url = 'http://{}:8000/template'.format(host)
     data = {"label": "{}".format(prefix),
-            "attrs" : [{"label": "protocol",
-                        "type": "meta",
-                        "value_type": "string",
-                        "static_value": "mqtt"},
-                       #{
-                       #    "label": "device_timeout",
-                       #    "type": "meta",
-                       #    "value_type": "integer",
-                       #    "static_value": 600000
-                       #},
-                       {"label" : "gps",
-                        "type" : "dynamic",
-                        "value_type" : "geo:point"},
-                       {"label" : "sinr",
-                        "type" : "dynamic",
-                        "value_type" : "float"},
-                       {"label": "temperature",
-                        "type": "dynamic",
-                        "value_type": "float"},
-                       {"label": "rpm",
-                        "type": "dynamic",
-                        "value_type": "float"},
-                       {"label": "serial",
-                        "type": "static",
-                        "value_type": "string",
-                        "static_value": "undefined"}]}
+            "attrs" : device_attributes_model}
     response = requests.post(url=url, headers=auth_header, json=data)
     if response.status_code != 200:
         raise Exception("HTTP POST failed {}.".
@@ -69,30 +124,6 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
             raise Exception("HTTP POST failed {}.".
                             format(response.status_code))
         devices.append(device_id)
-
-        # Set serial number
-        url_update = 'http://{}:8000/device/{}'.format(host, device_id)
-        # Get
-        response = requests.get(url=url_update, headers=auth_header)
-        if response.status_code != 200:
-            raise Exception("HTTP POST failed {}.".
-                            format(response.status_code))
-        data = response.json()
-        attrs_static = []
-        for attribute in data['attrs']["{}".format(template_id)]:
-            if attribute['type'] == 'static':
-                if attribute['label'] == 'serial':
-                    attribute['static_value'] = uuid.uuid4().hex
-                    # workaround gui. TODO: remove when fixed
-                    attribute['static_value'] = attribute['static_value'][:12]
-                attrs_static.append(attribute)
-        data['attrs'] = attrs_static
-
-        # Put
-        response = requests.put(url=url_update, headers=auth_header, json=data)
-        if response.status_code != 200:
-            raise Exception("HTTP POST failed {}.".
-                            format(response.status_code))
 
     logger.info("Created devices: {}".format(devices))
 

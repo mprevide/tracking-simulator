@@ -6,20 +6,19 @@ import numpy as np
 import paho.mqtt.client as mqtt
 from geopy import Point
 from geopy import distance
+import uuid
+from datetime import datetime
+from trackingsim.devices import device_attributes_model
 
 
 class Simulator:
-    MIN_SLEEP_TIME = 2    # 2 second
-    MAX_SLEEP_TIME = 10   # 10 seconds
     MIN_DISPLACEMENT = 0   # 0 Km
     MAX_DISPLACEMENT = 0.5 # 0.5 Km
     MIN_BEARING = 0    # 0 degree
     MAX_BEARING = 360  # 360 degrees
     MAX_DISPLACEMENT_FROM_ORIGIN = 50  # 50 Km
-    MEAN_TEMPERATURE = 90
-    MEAN_RPM = 4000
 
-    def __init__(self, host, port, tenant, device, latitude, longitude, movement):
+    def __init__(self, host, port, tenant, device, latitude, longitude, movement, min_sleep, max_sleep):
         self.__logger = logging.getLogger('trackingsim.sim')
         self.__origin = Point(latitude, longitude)
         self.__current_position = Point(latitude, longitude)
@@ -27,8 +26,8 @@ class Simulator:
         self.__mqttc.connect(host=host, port=port)
         self.__mqttc.loop_start()
         self.__topic = "/{0}/{1}/attrs".format(tenant, device)
-        self.__sleep = np.random.uniform(self.__class__.MIN_SLEEP_TIME, self.__class__.MAX_SLEEP_TIME)
-        self.__logger.info("Starting simulation for device {0} with sleep time {1}".format(device, self.__sleep))
+        self.__sleep = np.random.uniform(min_sleep, max_sleep)
+        self.__device = device
 
         if movement == 'straight-line':
             self.__next_movement = self.__get_next_position_for_straight_line
@@ -41,22 +40,15 @@ class Simulator:
         self.__bearing = \
             np.random.uniform(self.__class__.MIN_BEARING, self.__class__.MAX_BEARING)
 
+        self.__logger.info("Starting simulation for device {} with sleep time {}".
+                           format(device, self.__sleep))
+
     def run(self):
         while True:
             data = dict()
-
-            # gps
-            data['gps'] = "{0}, {1}".format(str(self.__current_position.latitude),
-                                            str(self.__current_position.longitude))
-
-            # sinr
-            data['sinr'] = self.__get_next_sinr()
-
-            # temperature
-            data['temperature'] = np.random.normal(self.MEAN_TEMPERATURE)
-
-            # RPM
-            data['rpm'] = np.random.normal(self.MEAN_RPM)
+            for attr in device_attributes_model:
+                if attr['type'] == 'dynamic':
+                    data[attr['label']] = self.__get_next_value(attr)
 
             # publish
             self.__logger.info("Publishing: {0}".format(json.dumps(data)))
@@ -134,3 +126,33 @@ class Simulator:
             sinr = np.random.uniform(-1, 2)
 
         return sinr
+
+    def __get_next_value(self, attr):
+        value = None
+
+        if attr['label'] == 'coordinates':
+            value = "{}, {}".format(str(self.__current_position.latitude),
+                                    str(self.__current_position.longitude))
+
+        elif attr['label'] == 'lat':
+            value = self.__current_position.latitude
+
+        elif attr['label'] == 'lon':
+            value = self.__current_position.longitude
+
+        elif attr['label'] == 'sinr':
+            value = self.__get_next_sinr()
+
+        elif attr['label'] == 'ts':
+            value = datetime.timestamp(datetime.now())
+
+        elif attr['value_type'] == 'string':
+            value = str(uuid.uuid4())[:np.random.randint(1,32)]
+
+        elif attr['value_type'] == 'integer':
+            value = np.random.randint(0,128)
+
+        elif attr['value_type'] == 'float':
+            value = np.random.uniform(0,100)
+
+        return value
