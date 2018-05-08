@@ -30,6 +30,8 @@ Options:
   -u USER, --user=USER  User identifier in dojot. Defaults to admin.
   -p PASSWORD, --password=PASSWORD
                         User password in dojot. Defaults to admin.
+  -s                    Enables https communication with dojot.
+
   -l PREFIX, --prefix=PREFIX
                         Label prefix for templates and devices. Defaults to
                         trackingsim.

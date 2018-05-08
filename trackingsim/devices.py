@@ -1,5 +1,4 @@
 import requests
-import json
 import logging
 import uuid
 # TODO: handle errors
@@ -7,13 +6,17 @@ import uuid
 logger = logging.getLogger('trackingsim.devices')
 
 
-def create_devices(host, user, password, number_of_devices, prefix='trackingsim'):
+def create_devices(secure, host, user, password, number_of_devices, prefix='trackingsim'):
     devices = []
 
     # Get JWT token
-    url = 'http://{}:8000/auth'.format(host)
+    if secure:
+        url = 'https://{}/auth'.format(host)
+    else:
+        url = 'http://{}:8000/auth'.format(host)
+
     data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
-    response = requests.post(url=url, json=data)
+    response = requests.post(url=url, json=data, verify=False)
     token = response.json()['jwt']
     if response.status_code != 200:
         raise Exception("HTTP POST failed {}.".
@@ -21,18 +24,21 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
     auth_header = {"Authorization": "Bearer {}".format(token)}
 
     # Create Template
-    url = 'http://{}:8000/template'.format(host)
+    if secure:
+        url = 'https://{}/template'.format(host)
+    else:
+        url = 'http://{}:8000/template'.format(host)
     data = {"label": "{}".format(prefix),
             "attrs" : [{"label": "protocol",
                         "type": "meta",
                         "value_type": "string",
                         "static_value": "mqtt"},
-                       #{
-                       #    "label": "device_timeout",
-                       #    "type": "meta",
-                       #    "value_type": "integer",
-                       #    "static_value": 600000
-                       #},
+                       {
+                           "label": "device_timeout",
+                           "type": "meta",
+                           "value_type": "integer",
+                           "static_value": 600000
+                       },
                        {"label" : "gps",
                         "type" : "dynamic",
                         "value_type" : "geo:point"},
@@ -49,18 +55,21 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
                         "type": "static",
                         "value_type": "string",
                         "static_value": "undefined"}]}
-    response = requests.post(url=url, headers=auth_header, json=data)
+    response = requests.post(url=url, headers=auth_header, json=data, verify=False)
     if response.status_code != 200:
         raise Exception("HTTP POST failed {}.".
                         format(response.status_code))
     template_id = response.json()['template']['id']
 
     # Create devices
-    url = 'http://{}:8000/device'.format(host)
+    if secure:
+        url = 'https://{}/device'.format(host)
+    else:
+        url = 'http://{}:8000/device'.format(host)
     for n in range(1,number_of_devices+1):
         data = {"templates" : ["{}".format(template_id)],
                 "label" : "{0}-{1}".format(prefix,n)}
-        response = requests.post(url=url, headers=auth_header, json=data)
+        response = requests.post(url=url, headers=auth_header, json=data, verify=False)
         if response.status_code != 200:
             raise Exception("HTTP POST failed {}.".
                             format(response.status_code))
@@ -71,9 +80,12 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
         devices.append(device_id)
 
         # Set serial number
-        url_update = 'http://{}:8000/device/{}'.format(host, device_id)
+        if secure:
+            url_update = 'https://{}/device/{}'.format(host, device_id)
+        else:
+            url_update = 'http://{}:8000/device/{}'.format(host, device_id)
         # Get
-        response = requests.get(url=url_update, headers=auth_header)
+        response = requests.get(url=url_update, headers=auth_header, verify=False)
         if response.status_code != 200:
             raise Exception("HTTP POST failed {}.".
                             format(response.status_code))
@@ -83,13 +95,12 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
             if attribute['type'] == 'static':
                 if attribute['label'] == 'serial':
                     attribute['static_value'] = uuid.uuid4().hex
-                    # workaround gui. TODO: remove when fixed
-                    attribute['static_value'] = attribute['static_value'][:12]
+                    attribute['static_value'] = attribute['static_value']
                 attrs_static.append(attribute)
         data['attrs'] = attrs_static
 
         # Put
-        response = requests.put(url=url_update, headers=auth_header, json=data)
+        response = requests.put(url=url_update, headers=auth_header, json=data, verify=False)
         if response.status_code != 200:
             raise Exception("HTTP POST failed {}.".
                             format(response.status_code))
@@ -99,11 +110,14 @@ def create_devices(host, user, password, number_of_devices, prefix='trackingsim'
     return devices
 
 
-def remove_devices(host, user, password, prefix='trackingsim'):
+def remove_devices(secure, host, user, password, prefix='trackingsim'):
     # Get JWT token
-    url = 'http://{}:8000/auth'.format(host)
+    if secure:
+        url = 'https://{}/auth'.format(host)
+    else:
+        url = 'http://{}:8000/auth'.format(host)
     data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
-    response = requests.post(url=url, json=data)
+    response = requests.post(url=url, json=data, verify=False)
     if response.status_code != 200:
         raise Exception("HTTP POST failed {}.".
                         format(response.status_code))
@@ -112,8 +126,11 @@ def remove_devices(host, user, password, prefix='trackingsim'):
 
     # Get devices
     # TODO handle pagination
-    url = 'http://{}:8000/device?page_size=128'.format(host)
-    response = requests.get(url=url, headers=auth_header)
+    if secure:
+        url = 'https://{}/device?page_size=128'.format(host)
+    else:
+        url = 'http://{}:8000/device?page_size=128'.format(host)
+    response = requests.get(url=url, headers=auth_header, verify=False)
     if response.status_code != 200:
         raise Exception("HTTP GET failed {}.".
                         format(response.status_code))
@@ -127,8 +144,11 @@ def remove_devices(host, user, password, prefix='trackingsim'):
     # Remove devices
     removed_devices = []
     for dev in devices_to_be_removed:
-        url = 'http://{0}:8000/device/{1}'.format(host, dev)
-        response = requests.delete(url=url, headers=auth_header)
+        if secure:
+            url = 'https://{0}/device/{1}'.format(host, dev)
+        else:
+            url = 'http://{0}:8000/device/{1}'.format(host, dev)
+        response = requests.delete(url=url, headers=auth_header, verify=False)
         if response.status_code == requests.codes.ok:
             removed_devices.append(dev)
         else:
@@ -138,8 +158,11 @@ def remove_devices(host, user, password, prefix='trackingsim'):
 
     # Get templates
     # TODO handle pagination
-    url = 'http://{}:8000/template?page_size=1000'.format(host)
-    response = requests.get(url=url, headers=auth_header)
+    if secure:
+        url = 'https://{}/template?page_size=1000'.format(host)
+    else:
+        url = 'http://{}:8000/template?page_size=1000'.format(host)
+    response = requests.get(url=url, headers=auth_header, verify=False)
     if response.status_code != 200:
         raise Exception("HTTP GET failed {}.".
                         format(response.status_code))
@@ -153,8 +176,11 @@ def remove_devices(host, user, password, prefix='trackingsim'):
     # Remove templates
     removed_templates = []
     for tpl in templates_to_be_removed:
-        url = 'http://{0}:8000/template/{1}'.format(host, tpl)
-        response = requests.delete(url=url, headers=auth_header)
+        if secure:
+            url = 'https://{0}/template/{1}'.format(host, tpl)
+        else:
+            url = 'http://{0}:8000/template/{1}'.format(host, tpl)
+        response = requests.delete(url=url, headers=auth_header, verify=False)
         if response.status_code == requests.codes.ok:
             removed_templates.append(tpl)
         else:

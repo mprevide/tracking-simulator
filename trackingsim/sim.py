@@ -9,13 +9,13 @@ from geopy import distance
 
 
 class Simulator:
-    MIN_SLEEP_TIME = 2    # 2 second
-    MAX_SLEEP_TIME = 10   # 10 seconds
-    MIN_DISPLACEMENT = 0   # 0 Km
-    MAX_DISPLACEMENT = 0.5 # 0.5 Km
+    MIN_SLEEP_TIME = 2      # 2 second
+    MAX_SLEEP_TIME = 10     # 10 seconds
+    MIN_DISPLACEMENT = 0    # 0 Km
+    MAX_DISPLACEMENT = 0.01 # 0.01 Km
     MIN_BEARING = 0    # 0 degree
     MAX_BEARING = 360  # 360 degrees
-    MAX_DISPLACEMENT_FROM_ORIGIN = 50  # 50 Km
+    MAX_DISPLACEMENT_FROM_ORIGIN = 25  # 25 Km
     MEAN_TEMPERATURE = 90
     MEAN_RPM = 4000
 

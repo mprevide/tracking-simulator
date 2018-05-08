@@ -43,6 +43,10 @@ if __name__ == '__main__':
     parser.add_option("-p", "--password", dest="password", default="admin",
                       help="User password in dojot. Defaults to admin.")
 
+    # dojot - https or http
+    parser.add_option("-s", action="store_true", dest="secure", default=False,
+                      help="Enables https communication with dojot.")
+
     # dojot - prefix
     parser.add_option("-l", "--prefix", dest="prefix", default="trackingsim",
                       help="Label prefix for templates and devices. Defaults to trackingsim.")
@@ -89,12 +93,15 @@ if __name__ == '__main__':
 
     # remove devices and templates from earlier runs
     if options.clear:
-        remove_devices(options.host, options.user, options.password, options.prefix)
+        remove_devices(options.secure, options.host, options.user,
+                       options.password, options.prefix)
 
     # create templates and devices
     devices = []
     if options.number_of_devices > 0:
-        devices = create_devices(options.host, options.user,
+        devices = create_devices(options.secure,
+                                 options.host,
+                                 options.user,
                                  options.password,
                                  options.number_of_devices,
                                  options.prefix)
