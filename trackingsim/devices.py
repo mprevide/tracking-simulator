@@ -16,7 +16,7 @@ def create_devices(secure, host, user, password, number_of_devices, prefix='trac
         url = 'http://{}:8000/auth'.format(host)
 
     data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
-    response = requests.post(url=url, json=data, verify=False)
+    response = requests.post(url=url, json=data)
     token = response.json()['jwt']
     if response.status_code != 200:
         raise Exception("HTTP POST failed {}.".
@@ -55,7 +55,7 @@ def create_devices(secure, host, user, password, number_of_devices, prefix='trac
                         "type": "static",
                         "value_type": "string",
                         "static_value": "undefined"}]}
-    response = requests.post(url=url, headers=auth_header, json=data, verify=False)
+    response = requests.post(url=url, headers=auth_header, json=data)
     if response.status_code != 200:
         raise Exception("HTTP POST failed {}.".
                         format(response.status_code))
@@ -69,7 +69,7 @@ def create_devices(secure, host, user, password, number_of_devices, prefix='trac
     for n in range(1,number_of_devices+1):
         data = {"templates" : ["{}".format(template_id)],
                 "label" : "{0}-{1}".format(prefix,n)}
-        response = requests.post(url=url, headers=auth_header, json=data, verify=False)
+        response = requests.post(url=url, headers=auth_header, json=data)
         if response.status_code != 200:
             raise Exception("HTTP POST failed {}.".
                             format(response.status_code))
@@ -85,7 +85,7 @@ def create_devices(secure, host, user, password, number_of_devices, prefix='trac
         else:
             url_update = 'http://{}:8000/device/{}'.format(host, device_id)
         # Get
-        response = requests.get(url=url_update, headers=auth_header, verify=False)
+        response = requests.get(url=url_update, headers=auth_header)
         if response.status_code != 200:
             raise Exception("HTTP POST failed {}.".
                             format(response.status_code))
@@ -100,7 +100,7 @@ def create_devices(secure, host, user, password, number_of_devices, prefix='trac
         data['attrs'] = attrs_static
 
         # Put
-        response = requests.put(url=url_update, headers=auth_header, json=data, verify=False)
+        response = requests.put(url=url_update, headers=auth_header, json=data)
         if response.status_code != 200:
             raise Exception("HTTP POST failed {}.".
                             format(response.status_code))
@@ -117,7 +117,7 @@ def remove_devices(secure, host, user, password, prefix='trackingsim'):
     else:
         url = 'http://{}:8000/auth'.format(host)
     data = {"username" : "{}".format(user), "passwd" : "{}".format(password)}
-    response = requests.post(url=url, json=data, verify=False)
+    response = requests.post(url=url, json=data)
     if response.status_code != 200:
         raise Exception("HTTP POST failed {}.".
                         format(response.status_code))
@@ -130,7 +130,7 @@ def remove_devices(secure, host, user, password, prefix='trackingsim'):
         url = 'https://{}/device?page_size=128'.format(host)
     else:
         url = 'http://{}:8000/device?page_size=128'.format(host)
-    response = requests.get(url=url, headers=auth_header, verify=False)
+    response = requests.get(url=url, headers=auth_header)
     if response.status_code != 200:
         raise Exception("HTTP GET failed {}.".
                         format(response.status_code))
@@ -148,7 +148,7 @@ def remove_devices(secure, host, user, password, prefix='trackingsim'):
             url = 'https://{0}/device/{1}'.format(host, dev)
         else:
             url = 'http://{0}:8000/device/{1}'.format(host, dev)
-        response = requests.delete(url=url, headers=auth_header, verify=False)
+        response = requests.delete(url=url, headers=auth_header)
         if response.status_code == requests.codes.ok:
             removed_devices.append(dev)
         else:
@@ -162,7 +162,7 @@ def remove_devices(secure, host, user, password, prefix='trackingsim'):
         url = 'https://{}/template?page_size=1000'.format(host)
     else:
         url = 'http://{}:8000/template?page_size=1000'.format(host)
-    response = requests.get(url=url, headers=auth_header, verify=False)
+    response = requests.get(url=url, headers=auth_header)
     if response.status_code != 200:
         raise Exception("HTTP GET failed {}.".
                         format(response.status_code))
@@ -180,7 +180,7 @@ def remove_devices(secure, host, user, password, prefix='trackingsim'):
             url = 'https://{0}/template/{1}'.format(host, tpl)
         else:
             url = 'http://{0}:8000/template/{1}'.format(host, tpl)
-        response = requests.delete(url=url, headers=auth_header, verify=False)
+        response = requests.delete(url=url, headers=auth_header)
         if response.status_code == requests.codes.ok:
             removed_templates.append(tpl)
         else:
