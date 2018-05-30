@@ -31,6 +31,10 @@ if __name__ == '__main__':
     parser.add_option("-P", "--port", dest="port", type="int", default=1883,
                       help="Port to connect to. Defaults to 1883.")
 
+    # API Gateway - IP
+    parser.add_option("-G", "--api-gateway", dest="gw", default="127.0.0.1",
+                      help="API Gateway to connect to. Defaults to localhost.")
+
     # dojot - Tenant ID
     parser.add_option("-t", "--tenant", dest="tenant", default="admin",
                       help="Tenant identifier in dojot. Defaults to admin.")
@@ -93,14 +97,14 @@ if __name__ == '__main__':
 
     # remove devices and templates from earlier runs
     if options.clear:
-        remove_devices(options.secure, options.host, options.user,
+        remove_devices(options.secure, options.gw, options.user,
                        options.password, options.prefix)
 
     # create templates and devices
     devices = []
     if options.number_of_devices > 0:
         devices = create_devices(options.secure,
-                                 options.host,
+                                 options.gw,
                                  options.user,
                                  options.password,
                                  options.number_of_devices,
