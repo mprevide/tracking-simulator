@@ -23,7 +23,7 @@ class Simulator:
         self.__logger = logging.getLogger('trackingsim.sim')
         self.__origin = Point(latitude, longitude)
         self.__current_position = Point(latitude, longitude)
-        self.__mqttc = mqtt.Client(str(threading.current_thread().ident))
+        self.__mqttc = mqtt.Client("{}:{}".format(tenant,device))
         self.__mqttc.connect(host=host, port=port)
         self.__mqttc.loop_start()
         self.__topic = "/{0}/{1}/attrs".format(tenant, device)
